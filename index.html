@@ -10,6 +10,7 @@
             --card-bg: #ffffff;
             --text-color: #333333;
             --primary-color: #5c67f2;
+            --secondary-color: #4a5568;
             --danger-color: #ff6b6b;
             --border-color: #e2e8f0;
         }
@@ -45,7 +46,7 @@
         .input-group {
             display: flex;
             gap: 10px;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
 
         input[type="text"] {
@@ -62,9 +63,7 @@
             border-color: var(--primary-color);
         }
 
-        button.add-btn {
-            background-color: var(--primary-color);
-            color: white;
+        button {
             border: none;
             padding: 0.8rem 1.2rem;
             border-radius: 6px;
@@ -74,8 +73,29 @@
             transition: opacity 0.2s;
         }
 
-        button.add-btn:hover {
+        button:hover {
             opacity: 0.9;
+        }
+
+        .add-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .tasks-toggle-btn {
+            background-color: var(--secondary-color);
+            color: white;
+            width: 100%;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Hidden class for the list toggle functionality */
+        .hidden {
+            display: none !important;
         }
 
         ul {
@@ -140,13 +160,21 @@
             <button class="add-btn" id="add-button">Add</button>
         </div>
 
-        <ul id="todo-list"></ul>
+        <!-- New toggle button below the add section -->
+        <button class="tasks-toggle-btn" id="toggle-tasks-btn">
+            My Tasks (<span id="task-count">0</span>) ▾
+        </button>
+
+        <!-- The list starts hidden -->
+        <ul id="todo-list" class="hidden"></ul>
     </div>
 
     <script>
         // DOM Elements
         const todoInput = document.getElementById('todo-input');
         const addButton = document.getElementById('add-button');
+        const toggleTasksBtn = document.getElementById('toggle-tasks-btn');
+        const taskCountSpan = document.getElementById('task-count');
         const todoList = document.getElementById('todo-list');
 
         // Load tasks from LocalStorage
@@ -165,6 +193,9 @@
                 `;
                 todoList.appendChild(li);
             });
+            
+            // Update counter badge inside the button
+            taskCountSpan.textContent = tasks.length;
             saveTasks();
         }
 
@@ -176,6 +207,23 @@
             tasks.push({ text: taskText, completed: false });
             todoInput.value = '';
             renderTasks();
+        }
+
+        // Toggle visibility of the list
+        function toggleListVisibility() {
+            todoList.classList.toggle('hidden');
+            
+            // Change arrow direction indicator based on visibility state
+            if (todoList.classList.contains('hidden')) {
+                toggleTasksBtn.innerHTML = `My Tasks (<span id="task-count">${tasks.length}</span>) ▾`;
+            } else {
+                toggleTasksBtn.innerHTML = `My Tasks (<span id="task-count">${tasks.length}</span>) ▴`;
+            }
+            // Re-assign the span reference since innerHTML wipes it
+            setTimeout(() => {
+                const newSpan = document.getElementById('task-count');
+                newSpan.textContent = tasks.length;
+            }, 0);
         }
 
         // Toggle task completion
@@ -200,6 +248,7 @@
         todoInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') addTask();
         });
+        toggleTasksBtn.addEventListener('click', toggleListVisibility);
 
         // Initial Render
         renderTasks();
