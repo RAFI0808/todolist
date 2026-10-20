@@ -24,6 +24,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
         .todo-container {
@@ -34,6 +35,29 @@
             width: 100%;
             max-width: 450px;
             box-sizing: border-box;
+            position: relative;
+            min-height: 320px;
+            overflow: hidden;
+        }
+
+        /* Screen Wrapper for Sliding Animations */
+        .screen-wrapper {
+            display: flex;
+            width: 200%; /* Holds two screens side-by-side */
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* Individual Screens */
+        .screen {
+            width: 50%;
+            padding: 0 5px;
+            box-sizing: border-box;
+            flex-shrink: 0;
+        }
+
+        /* Active Navigation States */
+        .todo-container.show-tasks .screen-wrapper {
+            transform: translateX(-50%); /* Slides forward to the tasks screen */
         }
 
         h1 {
@@ -46,7 +70,7 @@
         .input-group {
             display: flex;
             gap: 10px;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         input[type="text"] {
@@ -82,36 +106,47 @@
             color: white;
         }
 
-        .tasks-toggle-btn {
+        .nav-btn {
             background-color: var(--secondary-color);
             color: white;
             width: 100%;
-            margin-bottom: 1.5rem;
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 8px;
         }
 
-        /* Hidden class for the list toggle functionality */
-        .hidden {
-            display: none !important;
+        .back-btn {
+            background-color: transparent;
+            color: var(--secondary-color);
+            padding: 0.5rem 0;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .back-btn:hover {
+            color: var(--primary-color);
+            background: none;
         }
 
         ul {
             list-style: none;
             padding: 0;
             margin: 0;
+            max-height: 250px;
+            overflow-y: auto;
         }
 
         li {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.8rem;
+            padding: 0.8rem 0;
             border-bottom: 1px solid var(--border-color);
             gap: 10px;
-            animation: fadeIn 0.3s ease;
         }
 
         li:last-child {
@@ -137,64 +172,83 @@
             font-size: 1.1rem;
             padding: 4px 8px;
             border-radius: 4px;
-            transition: background 0.2s;
         }
 
         .delete-btn:hover {
             background-color: #fff5f5;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .empty-state {
+            text-align: center;
+            color: #a0aec0;
+            margin-top: 2rem;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
 
-    <div class="todo-container">
-        <h1>My Tasks</h1>
-        
-        <div class="input-group">
-            <input type="text" id="todo-input" placeholder="Add a new task..." autocomplete="off">
-            <button class="add-btn" id="add-button">Add</button>
+    <div class="todo-container" id="app-container">
+        <div class="screen-wrapper">
+            
+            <!-- SCREEN 1: Input & Navigation -->
+            <div class="screen">
+                <h1>Create Task</h1>
+                <div class="input-group">
+                    <input type="text" id="todo-input" placeholder="What needs to be done?" autocomplete="off">
+                    <button class="add-btn" id="add-button">Add</button>
+                </div>
+                <button class="nav-btn" id="go-to-tasks-btn">
+                    My Tasks (<span id="task-count">0</span>) →
+                </button>
+            </div>
+
+            <!-- SCREEN 2: Task List (Slides Forward) -->
+            <div class="screen">
+                <button class="back-btn" id="back-to-input-btn">← Back to Create</button>
+                <h1>My Tasks</h1>
+                <ul id="todo-list"></ul>
+                <div id="empty-msg" class="empty-state">No tasks added yet!</div>
+            </div>
+
         </div>
-
-        <!-- New toggle button below the add section -->
-        <button class="tasks-toggle-btn" id="toggle-tasks-btn">
-            My Tasks (<span id="task-count">0</span>) ▾
-        </button>
-
-        <!-- The list starts hidden -->
-        <ul id="todo-list" class="hidden"></ul>
     </div>
 
     <script>
         // DOM Elements
+        const appContainer = document.getElementById('app-container');
         const todoInput = document.getElementById('todo-input');
         const addButton = document.getElementById('add-button');
-        const toggleTasksBtn = document.getElementById('toggle-tasks-btn');
+        const goToTasksBtn = document.getElementById('go-to-tasks-btn');
+        const backToInputBtn = document.getElementById('back-to-input-btn');
         const taskCountSpan = document.getElementById('task-count');
         const todoList = document.getElementById('todo-list');
+        const emptyMsg = document.getElementById('empty-msg');
 
         // Load tasks from LocalStorage
         let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
 
-        // Initialize App
+        // Initialize and Update Interface
         function renderTasks() {
             todoList.innerHTML = '';
-            tasks.forEach((task, index) => {
-                const li = document.createElement('li');
-                if (task.completed) li.classList.add('completed');
-
-                li.innerHTML = `
-                    <span class="task-text" onclick="toggleTask(${index})">${task.text}</span>
-                    <button class="delete-btn" onclick="deleteTask(${index})">✕</button>
-                `;
-                todoList.appendChild(li);
-            });
             
-            // Update counter badge inside the button
+            if (tasks.length === 0) {
+                emptyMsg.style.display = 'block';
+            } else {
+                emptyMsg.style.display = 'none';
+                tasks.forEach((task, index) => {
+                    const li = document.createElement('li');
+                    if (task.completed) li.classList.add('completed');
+
+                    li.innerHTML = `
+                        <span class="task-text" onclick="toggleTask(${index})">${task.text}</span>
+                        <button class="delete-btn" onclick="deleteTask(${index})">✕</button>
+                    `;
+                    todoList.appendChild(li);
+                });
+            }
+            
+            // Update item counter on screen 1
             taskCountSpan.textContent = tasks.length;
             saveTasks();
         }
@@ -207,23 +261,9 @@
             tasks.push({ text: taskText, completed: false });
             todoInput.value = '';
             renderTasks();
-        }
-
-        // Toggle visibility of the list
-        function toggleListVisibility() {
-            todoList.classList.toggle('hidden');
             
-            // Change arrow direction indicator based on visibility state
-            if (todoList.classList.contains('hidden')) {
-                toggleTasksBtn.innerHTML = `My Tasks (<span id="task-count">${tasks.length}</span>) ▾`;
-            } else {
-                toggleTasksBtn.innerHTML = `My Tasks (<span id="task-count">${tasks.length}</span>) ▴`;
-            }
-            // Re-assign the span reference since innerHTML wipes it
-            setTimeout(() => {
-                const newSpan = document.getElementById('task-count');
-                newSpan.textContent = tasks.length;
-            }, 0);
+            // Optional: Uncomment the next line if you want it to auto-slide to the list immediately when adding a task
+            // appContainer.classList.add('show-tasks');
         }
 
         // Toggle task completion
@@ -243,12 +283,20 @@
             localStorage.setItem('tasks', JSON.stringify(tasks));
         }
 
-        // Event Listeners
+        // Event Listeners for Navigation
+        goToTasksBtn.addEventListener('click', () => {
+            appContainer.classList.add('show-tasks');
+        });
+
+        backToInputBtn.addEventListener('click', () => {
+            appContainer.classList.remove('show-tasks');
+        });
+
+        // Event Listeners for Input Action
         addButton.addEventListener('click', addTask);
         todoInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') addTask();
         });
-        toggleTasksBtn.addEventListener('click', toggleListVisibility);
 
         // Initial Render
         renderTasks();
