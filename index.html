@@ -34,6 +34,17 @@
             width: 100%;
             max-width: 450px;
             box-sizing: border-box;
+            min-height: 300px;
+        }
+
+        /* Page System Rules */
+        .page {
+            display: none; /* By default saare pages hidden rahenge */
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .page.active {
+            display: block; /* Jo page active hoga sirf wahi dikhega */
         }
 
         h1 {
@@ -46,7 +57,7 @@
         .input-group {
             display: flex;
             gap: 10px;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         input[type="text"] {
@@ -82,33 +93,35 @@
             color: white;
         }
 
-        .tasks-toggle-btn {
+        .nav-btn {
             background-color: var(--secondary-color);
             color: white;
             width: 100%;
+            margin-top: 1rem;
+        }
+
+        .back-btn {
+            background-color: transparent;
+            color: var(--secondary-color);
+            padding: 0.5rem 0;
             margin-bottom: 1rem;
-            display: flex;
-            justify-content: center;
+            font-size: 0.95rem;
+            display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 5px;
         }
 
-        /* Hidden list state */
-        .hidden {
-            display: none !important;
-        }
-
-        .list-container {
-            border-top: 2px solid var(--border-color);
-            margin-top: 0.5rem;
-            padding-top: 0.5rem;
-            animation: fadeIn 0.3s ease;
+        .back-btn:hover {
+            color: var(--primary-color);
+            background: none;
         }
 
         ul {
             list-style: none;
             padding: 0;
             margin: 0;
+            max-height: 300px;
+            overflow-y: auto;
         }
 
         li {
@@ -152,56 +165,70 @@
         .empty-state {
             text-align: center;
             color: #a0aec0;
-            padding: 1rem 0;
+            padding: 2rem 0;
             font-style: italic;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-5px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
         }
     </style>
 </head>
 <body>
 
     <div class="todo-container">
-        <h1>Todo App</h1>
         
-        <div class="input-group">
-            <input type="text" id="todo-input" placeholder="Add a new task..." autocomplete="off">
-            <button class="add-btn" id="add-button">Add</button>
+        <!-- PAGE 1: CREATE TASK PAGE -->
+        <div id="create-page" class="page active">
+            <h1>Create Task</h1>
+            <div class="input-group">
+                <input type="text" id="todo-input" placeholder="What needs to be done?" autocomplete="off">
+                <button class="add-btn" id="add-button">Add</button>
+            </div>
+            
+            <!-- Button to switch to Page 2 -->
+            <button class="nav-btn" id="view-tasks-btn">
+                My Tasks (<span id="task-count">0</span>) →
+            </button>
         </div>
 
-        <!-- Clickable "My Tasks" button -->
-        <button class="tasks-toggle-btn" id="toggle-tasks-btn">
-            My Tasks (<span id="task-count">0</span>) ▾
-        </button>
-
-        <!-- Container containing the list that opens up -->
-        <div id="list-wrapper" class="list-container hidden">
+        <!-- PAGE 2: MY TASKS LIST PAGE -->
+        <div id="tasks-page" class="page">
+            <button class="back-btn" id="back-btn">← Back to Create</button>
+            <h1>My Tasks</h1>
+            
             <ul id="todo-list"></ul>
             <div id="empty-msg" class="empty-state">No tasks available.</div>
         </div>
+
     </div>
 
     <script>
+        // DOM Elements
+        const createPage = document.getElementById('create-page');
+        const tasksPage = document.getElementById('tasks-page');
+        
         const todoInput = document.getElementById('todo-input');
         const addButton = document.getElementById('add-button');
-        const toggleTasksBtn = document.getElementById('toggle-tasks-btn');
+        const viewTasksBtn = document.getElementById('view-tasks-btn');
+        const backBtn = document.getElementById('back-btn');
+        
         const taskCountSpan = document.getElementById('task-count');
-        const listWrapper = document.getElementById('list-wrapper');
         const todoList = document.getElementById('todo-list');
         const emptyMsg = document.getElementById('empty-msg');
 
+        // Load tasks
         let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
 
+        // App Functions
         function renderTasks() {
             todoList.innerHTML = '';
             
             if (tasks.length === 0) {
-                emptyMsg.classList.remove('hidden');
+                emptyMsg.style.display = 'block';
             } else {
-                emptyMsg.classList.add('hidden');
+                emptyMsg.style.display = 'none';
                 tasks.forEach((task, index) => {
                     const li = document.createElement('li');
                     if (task.completed) li.classList.add('completed');
@@ -227,21 +254,6 @@
             renderTasks();
         }
 
-        // Toggles the list drop-down view open or closed
-        function toggleListView() {
-            listWrapper.classList.toggle('hidden');
-            
-            // Adjusting arrow symbol dynamically
-            if (listWrapper.classList.contains('hidden')) {
-                toggleTasksBtn.innerHTML = `My Tasks (<span id="task-count">${tasks.length}</span>) ▾`;
-            } else {
-                toggleTasksBtn.innerHTML = `My Tasks (<span id="task-count">${tasks.length}</span>) ▴`;
-            }
-            
-            // Re-sync badge count
-            document.getElementById('task-count').textContent = tasks.length;
-        }
-
         window.toggleTask = function(index) {
             tasks[index].completed = !tasks[index].completed;
             renderTasks();
@@ -256,14 +268,24 @@
             localStorage.setItem('tasks', JSON.stringify(tasks));
         }
 
+        // Navigation Logics (Page Swapping)
+        viewTasksBtn.addEventListener('click', () => {
+            createPage.classList.remove('active'); // Hide page 1
+            tasksPage.classList.add('active');     // Show page 2
+        });
+
+        backBtn.addEventListener('click', () => {
+            tasksPage.classList.remove('active');  // Hide page 2
+            createPage.classList.add('active');    // Show page 1
+        });
+
+        // Event Listeners for Adding Tasks
         addButton.addEventListener('click', addTask);
         todoInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') addTask();
         });
-        
-        // Listener to open the dropdown
-        toggleTasksBtn.addEventListener('click', toggleListView);
 
+        // Init
         renderTasks();
     </script>
 </body>
