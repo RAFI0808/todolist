@@ -3,149 +3,264 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minimalist Todo List</title>
+    <title>Professional Task Management Portal</title>
     <style>
         :root {
-            --bg-color: #f4f7f6;
+            --bg-color: #f8fafc;
             --card-bg: #ffffff;
-            --text-color: #333333;
-            --primary-color: #5c67f2;
-            --secondary-color: #4a5568;
-            --danger-color: #ff6b6b;
+            --text-color: #1e293b;
+            --primary-color: #4f46e5;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
             --border-color: #e2e8f0;
+            --tag-bg: #f1f5f9;
+        }
+
+        /* Dark Mode Theme Overrides */
+        [data-theme="dark"] {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --secondary-color: #94a3b8;
+            --border-color: #334155;
+            --tag-bg: #334155;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
+            padding: 0;
             display: flex;
-            justify-content: center;
-            align-items: center;
+            flex-direction: column;
             min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        .todo-container {
+        /* Top Navigation Bar */
+        header {
             background-color: var(--card-bg);
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            width: 100%;
-            max-width: 450px;
-            box-sizing: border-box;
-            min-height: 300px;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            transition: background-color 0.3s, border-color 0.3s;
         }
 
-        /* Page System Rules */
-        .page {
-            display: none; /* By default saare pages hidden rahenge */
-            animation: fadeIn 0.3s ease-in-out;
+        .nav-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 1.5rem;
         }
 
-        .page.active {
-            display: block; /* Jo page active hoga sirf wahi dikhega */
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
-        h1 {
-            margin-top: 0;
-            font-size: 1.8rem;
-            text-align: center;
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
             color: var(--primary-color);
         }
 
-        .input-group {
+        /* Dark Mode Toggle Button */
+        .theme-toggle {
+            background: none;
+            border: 1px solid var(--border-color);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background-color: var(--tag-bg);
+        }
+
+        nav {
             display: flex;
             gap: 10px;
+        }
+
+        .nav-tab {
+            background: none;
+            border: none;
+            padding: 0.75rem 1.2rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--secondary-color);
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-tab:hover {
+            color: var(--primary-color);
+            background-color: var(--tag-bg);
+        }
+
+        .nav-tab.active {
+            color: white;
+            background-color: var(--primary-color);
+        }
+
+        /* Main Content Layout */
+        main {
+            max-width: 800px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            box-sizing: border-box;
+            flex: 1;
+        }
+
+        .page-content {
+            background-color: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            display: none;
+            animation: fadeIn 0.25s ease-in-out;
+            transition: background-color 0.3s;
+        }
+
+        .page-content.active {
+            display: block;
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 1.6rem;
+            color: var(--text-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
             margin-bottom: 1.5rem;
         }
 
-        input[type="text"] {
-            flex: 1;
-            padding: 0.8rem;
-            border: 2px solid var(--border-color);
+        /* Forms, Inputs, and Grid Configs */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 600px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        input, select, textarea {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
             border-radius: 6px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             outline: none;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, background-color 0.3s, color 0.3s;
+            color: var(--text-color);
+            background-color: var(--card-bg);
         }
 
-        input[type="text"]:focus {
+        input:focus, select:focus {
             border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
 
-        button {
+        button.btn-primary {
+            background-color: var(--primary-color);
+            color: white;
             border: none;
-            padding: 0.8rem 1.2rem;
+            padding: 0.75rem 1.5rem;
             border-radius: 6px;
-            font-size: 1rem;
+            font-weight: 600;
             cursor: pointer;
-            font-weight: bold;
             transition: opacity 0.2s;
+            white-space: nowrap;
         }
 
-        button:hover {
+        button.btn-primary:hover {
             opacity: 0.9;
         }
 
-        .add-btn {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        .nav-btn {
-            background-color: var(--secondary-color);
-            color: white;
-            width: 100%;
-            margin-top: 1rem;
-        }
-
-        .back-btn {
-            background-color: transparent;
-            color: var(--secondary-color);
-            padding: 0.5rem 0;
-            margin-bottom: 1rem;
-            font-size: 0.95rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .back-btn:hover {
-            color: var(--primary-color);
-            background: none;
-        }
-
+        /* List and Item Modules */
         ul {
             list-style: none;
             padding: 0;
             margin: 0;
-            max-height: 300px;
-            overflow-y: auto;
         }
 
         li {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.8rem;
-            border-bottom: 1px solid var(--border-color);
-            gap: 10px;
+            padding: 0.9rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            background-color: var(--card-bg);
+            transition: border-color 0.3s, background-color 0.3s;
         }
 
-        li:last-child {
-            border-bottom: none;
+        .task-main {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .checkbox-custom {
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+        }
+
+        .task-details {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
 
         .task-text {
-            flex: 1;
-            cursor: pointer;
             word-break: break-word;
+            font-size: 1rem;
         }
 
         .completed .task-text {
             text-decoration: line-through;
-            color: #a0aec0;
+            color: var(--secondary-color);
+        }
+
+        /* Priority Tags */
+        .priority-tag {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: bold;
+            display: inline-block;
+            width: max-content;
+        }
+        .priority-high { background-color: #ffeeef; color: var(--danger-color); }
+        .priority-medium { background-color: #fff9db; color: #f59f00; }
+        .priority-low { background-color: #eefaf3; color: var(--success-color); }
+
+        [data-theme="dark"] .priority-high { background-color: #4c1d1d; }
+        [data-theme="dark"] .priority-medium { background-color: #423b13; }
+        [data-theme="dark"] .priority-low { background-color: #143a25; }
+
+        .schedule-time {
+            font-size: 0.85rem;
+            color: var(--primary-color);
+            font-weight: 600;
         }
 
         .delete-btn {
@@ -159,134 +274,66 @@
         }
 
         .delete-btn:hover {
-            background-color: #fff5f5;
+            background-color: #fef2f2;
         }
 
         .empty-state {
             text-align: center;
-            color: #a0aec0;
+            color: var(--secondary-color);
             padding: 2rem 0;
             font-style: italic;
         }
 
+        /* About Text styling */
+        .about-text {
+            line-height: 1.6;
+            color: var(--secondary-color);
+            font-size: 1.05rem;
+        }
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.98); }
-            to { opacity: 1; transform: scale(1); }
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 <body>
 
-    <div class="todo-container">
-        
-        <!-- PAGE 1: CREATE TASK PAGE -->
-        <div id="create-page" class="page active">
-            <h1>Create Task</h1>
-            <div class="input-group">
-                <input type="text" id="todo-input" placeholder="What needs to be done?" autocomplete="off">
-                <button class="add-btn" id="add-button">Add</button>
+    <!-- Header Navigation Section -->
+    <header>
+        <div class="nav-container">
+            <div class="logo-section">
+                <div class="logo">TaskPortal</div>
+                <button class="theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()">🌙 Dark Mode</button>
             </div>
-            
-            <!-- Button to switch to Page 2 -->
-            <button class="nav-btn" id="view-tasks-btn">
-                My Tasks (<span id="task-count">0</span>) →
-            </button>
+            <nav>
+                <button class="nav-tab active" onclick="switchPage('general-tasks')">General Tasks</button>
+                <button class="nav-tab" onclick="switchPage('my-schedule')">My Schedule</button>
+                <button class="nav-tab" onclick="switchPage('about-section')">About</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Dynamic Application Window -->
+    <main>
+        
+        <!-- PAGE 1: GENERAL TASKS -->
+        <div id="general-tasks" class="page-content active">
+            <h2>General Tasks</h2>
+            <div class="form-grid">
+                <input type="text" id="task-input" placeholder="Enter a general todo item..." autocomplete="off">
+                <select id="task-priority">
+                    <option value="low">Low Priority</option>
+                    <option value="medium" selected>Medium Priority</option>
+                    <option value="high">High Priority</option>
+                </select>
+                <button class="btn-primary" onclick="addGeneralTask()">Add Task</button>
+            </div>
+            <ul id="general-task-list"></ul>
+            <div id="general-empty" class="empty-state">No tasks available. Add some above!</div>
         </div>
 
-        <!-- PAGE 2: MY TASKS LIST PAGE -->
-        <div id="tasks-page" class="page">
-            <button class="back-btn" id="back-btn">← Back to Create</button>
-            <h1>My Tasks</h1>
-            
-            <ul id="todo-list"></ul>
-            <div id="empty-msg" class="empty-state">No tasks available.</div>
-        </div>
-
-    </div>
-
-    <script>
-        // DOM Elements
-        const createPage = document.getElementById('create-page');
-        const tasksPage = document.getElementById('tasks-page');
-        
-        const todoInput = document.getElementById('todo-input');
-        const addButton = document.getElementById('add-button');
-        const viewTasksBtn = document.getElementById('view-tasks-btn');
-        const backBtn = document.getElementById('back-btn');
-        
-        const taskCountSpan = document.getElementById('task-count');
-        const todoList = document.getElementById('todo-list');
-        const emptyMsg = document.getElementById('empty-msg');
-
-        // Load tasks
-        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-
-        // App Functions
-        function renderTasks() {
-            todoList.innerHTML = '';
-            
-            if (tasks.length === 0) {
-                emptyMsg.style.display = 'block';
-            } else {
-                emptyMsg.style.display = 'none';
-                tasks.forEach((task, index) => {
-                    const li = document.createElement('li');
-                    if (task.completed) li.classList.add('completed');
-
-                    li.innerHTML = `
-                        <span class="task-text" onclick="toggleTask(${index})">${task.text}</span>
-                        <button class="delete-btn" onclick="deleteTask(${index})">✕</button>
-                    `;
-                    todoList.appendChild(li);
-                });
-            }
-            
-            taskCountSpan.textContent = tasks.length;
-            saveTasks();
-        }
-
-        function addTask() {
-            const taskText = todoInput.value.trim();
-            if (taskText === '') return;
-
-            tasks.push({ text: taskText, completed: false });
-            todoInput.value = '';
-            renderTasks();
-        }
-
-        window.toggleTask = function(index) {
-            tasks[index].completed = !tasks[index].completed;
-            renderTasks();
-        };
-
-        window.deleteTask = function(index) {
-            tasks.splice(index, 1);
-            renderTasks();
-        };
-
-        function saveTasks() {
-            localStorage.setItem('tasks', JSON.stringify(tasks));
-        }
-
-        // Navigation Logics (Page Swapping)
-        viewTasksBtn.addEventListener('click', () => {
-            createPage.classList.remove('active'); // Hide page 1
-            tasksPage.classList.add('active');     // Show page 2
-        });
-
-        backBtn.addEventListener('click', () => {
-            tasksPage.classList.remove('active');  // Hide page 2
-            createPage.classList.add('active');    // Show page 1
-        });
-
-        // Event Listeners for Adding Tasks
-        addButton.addEventListener('click', addTask);
-        todoInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') addTask();
-        });
-
-        // Init
-        renderTasks();
-    </script>
-</body>
-</html>
+        <!-- PAGE 2: MY SCHEDULE -->
+        <div id="my-schedule" class="page-content">
+            <h2>My Schedule</h2>
+            <div class="form-grid">
